@@ -2,6 +2,7 @@ use std::{ops::Add, ops::Sub, ops::Mul};
 use std::fmt::Debug;
 use std::any;
 
+#[derive(Clone)]
 pub struct Vector<T: VectorItem, const C: usize> {
     items: [T; C]
 }
@@ -102,3 +103,21 @@ macro_rules! impl_scalar_mul {
 *};}
 impl_scalar_mul!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64);
 
+impl<T: VectorItem, const C:usize> Vector<T, C> {
+    pub fn dot(self, rhs: Vector<T, C>) -> T {
+        let mut sum: T = T::default();
+        for i in 0..C {
+            sum = sum + (self.items[i] * rhs.items[i]);
+        }
+        sum
+    }
+    pub fn length(self) -> T {
+        let mut sum = T::default();
+        for val in &self.items {
+            sum = sum + (*val * *val);
+        }
+        sum
+    }
+}
+
+// TODO: add 'add' and 'mult' versions for references to vectors

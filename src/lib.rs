@@ -31,6 +31,8 @@ mod vector_tests {
         let vec1: Vector<i32, 3> = Vector::from([1, 2, 3]);
         let vec2: Vector<i32, 3> = Vector::from([4, 5, 6]);
         let vec_ans: Vector<i32, 3> = Vector::from([5, 7, 9]);
+        assert_eq!(vec1.clone() + vec2.clone(), vec_ans);
+        assert_eq!(vec2 + vec1, vec_ans);
     }
 
     #[test]
@@ -46,5 +48,13 @@ mod vector_tests {
         let vec2: Vector<i32, 3> = Vector::from([2, 4, 6]);
         assert_eq!(vec2, vec1a*i32::from(2));
         assert_eq!(vec2, i32::from(2)*vec1b);
+    }
+
+    #[test]
+    fn dot_product() {
+        let vec1: Vector<i32, 3> = Vector::from([1, 2, 3]);
+        let vec2: Vector<i32, 3> = Vector::from([4, 5, 6]);
+        assert_eq!(32, vec1.clone().dot(vec2.clone()));
+        assert_eq!(32, vec2.dot(vec1));
     }
 }
