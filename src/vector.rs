@@ -72,3 +72,33 @@ impl<T: VectorItem, const C: usize> Debug for Vector<T, C> {
             .finish()
     }
 }
+
+
+// Macro to implement scalar multiplication
+// Macro will be called on a list of types we consider 'scalar'
+
+macro_rules! impl_scalar_mul {
+    ($($t:ty),*) => {
+        $(
+            impl<const C: usize> Mul<Vector<$t, C>> for $t {
+                type Output = Vector<$t, C>;
+
+                fn mul(self, rhs: Vector<$t, C>) -> Self::Output {
+                    let mut new: [$t; C] = [<$t>::default(); C];
+                    for i in 0..C {
+                        new[i] = self * rhs.items[i];
+                    }
+                    Vector { items:new }
+                }
+            }
+            impl<const C: usize> Mul<$t> for Vector<$t, C> {
+                type Output = Vector<$t, C>;
+
+                fn mul(self, rhs: $t) -> Self::Output {
+                    rhs * self
+                }
+            }
+        )
+*};}
+impl_scalar_mul!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64);
+

@@ -38,4 +38,13 @@ mod vector_tests {
         let vec1: Vector<i32, 3> = Vector::from([1, 2, 3]);
         assert_eq!(format!("{:?}", vec1), "Vector<i32,3> { items: [1, 2, 3] }");
     }
+
+    #[test]
+    fn scalar_mult_same_type() {
+        let vec1a: Vector<i32, 3> = Vector::from([1, 2, 3]);
+        let vec1b: Vector<i32, 3> = Vector::from([1, 2, 3]);
+        let vec2: Vector<i32, 3> = Vector::from([2, 4, 6]);
+        assert_eq!(vec2, vec1a*i32::from(2));
+        assert_eq!(vec2, i32::from(2)*vec1b);
+    }
 }
