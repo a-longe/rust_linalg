@@ -1,4 +1,3 @@
-
 pub mod vector;
 pub mod matrix;
 fn main() {

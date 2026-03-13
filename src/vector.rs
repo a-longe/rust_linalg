@@ -2,9 +2,9 @@ use std::{ops::Add, ops::Sub, ops::Mul};
 use std::fmt::Debug;
 use std::any;
 
-#[derive(Clone)]
-pub struct Vector<T: VectorItem, const C: usize> {
-    items: [T; C]
+#[derive(Copy, Clone, PartialEq)]
+pub struct Vector<T: VectorItem, const R: usize> {
+    items: [T; R]
 }
 
 pub trait VectorItem:
@@ -34,41 +34,32 @@ impl<T> VectorItem for T where
     + Sized
 {}
 
-impl<T: VectorItem, const C: usize> Vector<T, C> {
-    pub fn new() -> Vector<T, C> {
-        return Vector { items: [T::default(); C] };
+impl<T: VectorItem, const R: usize> Vector<T, R> {
+    pub fn new() -> Vector<T, R> {
+        return Vector { items: [T::default(); R] };
     }
 }
 
-impl<T: VectorItem, const C: usize> Add<Vector<T, C>> for Vector<T, C> {
-    type Output = Vector<T, C>;
-    fn add(self, rhs: Vector<T, C>) -> Self::Output {
-        let mut new_s: [T; C] = [T::default(); C];
-        for i in 0..C {
+impl<T: VectorItem, const R: usize> Add<Vector<T, R>> for Vector<T, R> {
+    type Output = Vector<T, R>;
+    fn add(self, rhs: Vector<T, R>) -> Self::Output {
+        let mut new_s: [T; R] = [T::default(); R];
+        for i in 0..R {
             new_s[i] = self.items[i] + rhs.items[i];
         }
         Vector{ items: new_s }
     }
 }
 
-impl<T: VectorItem, const C:usize> From<[T; C]> for Vector<T, C> {
-    fn from(value: [T; C]) -> Self {
+impl<T: VectorItem, const R:usize> From<[T; R]> for Vector<T, R> {
+    fn from(value: [T; R]) -> Self {
         Vector { items: value }
     }
 }
 
-impl<T: VectorItem, const C: usize> PartialEq<Vector<T, C>> for Vector<T, C> {
-    fn eq(&self, other: &Vector<T, C>) -> bool {
-        self.items == other.items
-    }
-    fn ne(&self, other: &Vector<T, C>) -> bool {
-        self.items != other.items
-    }
-}
-
-impl<T: VectorItem, const C: usize> Debug for Vector<T, C> {
+impl<T: VectorItem, const R: usize> Debug for Vector<T, R> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("Vector<{},{}>", any::type_name::<T>(), C))
+        f.debug_struct(&format!("Vector<{},{}>", any::type_name::<T>(), R))
             .field("items", &self.items)
             .finish()
     }
@@ -78,22 +69,24 @@ impl<T: VectorItem, const C: usize> Debug for Vector<T, C> {
 // Macro to implement scalar multiplication
 // Macro will be called on a list of types we consider 'scalar'
 
-macro_rules! impl_scalar_mul {
+macro_rules! impl_vec_scalar_mul {
     ($($t:ty),*) => {
         $(
-            impl<const C: usize> Mul<Vector<$t, C>> for $t {
-                type Output = Vector<$t, C>;
+            // right hand scalar mult
+            impl<const R: usize> Mul<Vector<$t, R>> for $t {
+                type Output = Vector<$t, R>;
 
-                fn mul(self, rhs: Vector<$t, C>) -> Self::Output {
-                    let mut new: [$t; C] = [<$t>::default(); C];
-                    for i in 0..C {
+                fn mul(self, rhs: Vector<$t, R>) -> Self::Output {
+                    let mut new: [$t; R] = [<$t>::default(); R];
+                    for i in 0..R {
                         new[i] = self * rhs.items[i];
                     }
                     Vector { items:new }
                 }
             }
-            impl<const C: usize> Mul<$t> for Vector<$t, C> {
-                type Output = Vector<$t, C>;
+            // left hand scalar mult
+            impl<const R: usize> Mul<$t> for Vector<$t, R> {
+                type Output = Vector<$t, R>;
 
                 fn mul(self, rhs: $t) -> Self::Output {
                     rhs * self
@@ -101,12 +94,12 @@ macro_rules! impl_scalar_mul {
             }
         )
 *};}
-impl_scalar_mul!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64);
+impl_vec_scalar_mul!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64);
 
-impl<T: VectorItem, const C:usize> Vector<T, C> {
-    pub fn dot(self, rhs: Vector<T, C>) -> T {
+impl<T: VectorItem, const R:usize> Vector<T, R> {
+    pub fn dot(self, rhs: Vector<T, R>) -> T {
         let mut sum: T = T::default();
-        for i in 0..C {
+        for i in 0..R {
             sum = sum + (self.items[i] * rhs.items[i]);
         }
         sum
