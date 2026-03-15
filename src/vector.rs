@@ -1,4 +1,5 @@
 use std::{ops::Add, ops::Sub, ops::Mul};
+use std::slice::Iter;
 use std::fmt::Debug;
 use std::any;
 
@@ -37,6 +38,15 @@ impl<T> VectorItem for T where
 impl<T: VectorItem, const R: usize> Vector<T, R> {
     pub fn new() -> Vector<T, R> {
         return Vector { items: [T::default(); R] };
+    }
+    pub fn get(&self, i:usize) -> Option<T> {
+        if i >= R { return None; }
+        Some(self.items[i])
+    }
+    pub fn set(&mut self, i:usize, val:T) -> bool {
+        if i >= R { return false; }
+        self.items[i] = val;
+        true
     }
 }
 
@@ -114,3 +124,12 @@ impl<T: VectorItem, const R:usize> Vector<T, R> {
 }
 
 // TODO: add 'add' and 'mult' versions for references to vectors
+
+impl<'a, T: VectorItem, const R:usize> IntoIterator for &'a Vector<T, R> {
+    type Item = &'a T;
+    type IntoIter = Iter<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.items.iter()
+    }
+}

@@ -60,6 +60,7 @@ mod vector_tests {
 #[cfg(test)]
 mod matrix_tests {
     use crate::matrix::*;
+    use crate::vector::*;
 
     #[test]
     fn create_matrix_new() {
@@ -94,4 +95,39 @@ mod matrix_tests {
         assert_eq!(mat_ans, mat1*i32::from(3));
         assert_eq!(mat_ans, i32::from(3)*mat2);
     }
+
+    #[test]
+    fn matrix_get() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        assert_eq!(mat1.get(0, 0).unwrap(), i32::from(1));
+        assert_eq!(mat1.get(1, 0).unwrap(), i32::from(2));
+        assert_eq!(mat1.get(0, 1).unwrap(), i32::from(3));
+        assert_eq!(mat1.get(1, 1).unwrap(), i32::from(4));
+    }
+
+    #[test]
+    fn matrix_get_transpose() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[1, 3], [2, 4]]);
+        assert_eq!(mat_ans, mat1.get_transpose());
+    }
+
+    #[test]
+    fn matrix_get_col() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let row0: Vector<i32, 2> = Vector::from([1, 2]);
+        let row1: Vector<i32, 2> = Vector::from([3, 4]);
+        assert_eq!(row0, mat1.get_col(0).unwrap());
+        assert_eq!(row1, mat1.get_col(1).unwrap());
+    }
+
+    #[test]
+    fn matrix_get_row() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let col0: Vector<i32, 2> = Vector::from([1, 3]);
+        let col1: Vector<i32, 2> = Vector::from([2, 4]);
+        assert_eq!(col0, mat1.get_row(0).unwrap());
+        assert_eq!(col1, mat1.get_row(1).unwrap());
+    }
+
 }
