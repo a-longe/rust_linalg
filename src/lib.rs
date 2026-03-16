@@ -151,9 +151,13 @@ mod matrix_tests {
 
     #[test]
     fn matrix_mul() {
+        /*
+         * 1 3 * 5 7 =
+         * 2 4   6 8
+         */
         let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
         let mat2: Matrix<i32, 2, 2> = Matrix::from([[5, 6], [7, 8]]);
-        let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[19, 22], [43, 50]]);
+        let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[23, 34], [31, 46]]);
         assert_eq!(mat_ans, mat1 * mat2);
     }
 
