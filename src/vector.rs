@@ -1,11 +1,11 @@
-use std::{ops::Add, ops::Sub, ops::Mul};
-use std::slice::Iter;
-use std::fmt::Debug;
 use std::any;
+use std::fmt::Debug;
+use std::slice::Iter;
+use std::{ops::Add, ops::Mul, ops::Sub};
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Vector<T: VectorItem, const R: usize> {
-    items: [T; R]
+    items: [T; R],
 }
 
 pub trait VectorItem:
@@ -19,32 +19,40 @@ pub trait VectorItem:
     + Debug
     + Default
     + Sized
-{}
+{
+    fn one() -> Self;
+}
 
-// Blanket impl — any type satisfying the bounds automatically implements VectorItem
-impl<T> VectorItem for T where
-    T: Add<Output = T>
-    + Sub<Output = T>
-    + Mul<Output = T>
-    + PartialOrd
-    + PartialEq
-    + Copy
-    + Clone
-    + Debug
-    + Default
-    + Sized
-{}
+macro_rules! impl_vector_item {
+    ($($t:ty),*) => {
+        $(
+            impl VectorItem for $t {
+                fn one() -> Self { 1 as $t }
+            }
+        )*
+    };
+}
+
+impl_vector_item!(
+    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
+);
 
 impl<T: VectorItem, const R: usize> Vector<T, R> {
     pub fn new() -> Vector<T, R> {
-        return Vector { items: [T::default(); R] };
+        return Vector {
+            items: [T::default(); R],
+        };
     }
-    pub fn get(&self, i:usize) -> Option<T> {
-        if i >= R { return None; }
+    pub fn get(&self, i: usize) -> Option<T> {
+        if i >= R {
+            return None;
+        }
         Some(self.items[i])
     }
-    pub fn set(&mut self, i:usize, val:T) -> bool {
-        if i >= R { return false; }
+    pub fn set(&mut self, i: usize, val: T) -> bool {
+        if i >= R {
+            return false;
+        }
         self.items[i] = val;
         true
     }
@@ -57,11 +65,11 @@ impl<T: VectorItem, const R: usize> Add<Vector<T, R>> for Vector<T, R> {
         for i in 0..R {
             new_s[i] = self.items[i] + rhs.items[i];
         }
-        Vector{ items: new_s }
+        Vector { items: new_s }
     }
 }
 
-impl<T: VectorItem, const R:usize> From<[T; R]> for Vector<T, R> {
+impl<T: VectorItem, const R: usize> From<[T; R]> for Vector<T, R> {
     fn from(value: [T; R]) -> Self {
         Vector { items: value }
     }
@@ -74,7 +82,6 @@ impl<T: VectorItem, const R: usize> Debug for Vector<T, R> {
             .finish()
     }
 }
-
 
 // Macro to implement scalar multiplication
 // Macro will be called on a list of types we consider 'scalar'
@@ -104,9 +111,11 @@ macro_rules! impl_vec_scalar_mul {
             }
         )
 *};}
-impl_vec_scalar_mul!(i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64);
+impl_vec_scalar_mul!(
+    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
+);
 
-impl<T: VectorItem, const R:usize> Vector<T, R> {
+impl<T: VectorItem, const R: usize> Vector<T, R> {
     pub fn dot(self, rhs: Vector<T, R>) -> T {
         let mut sum: T = T::default();
         for i in 0..R {
@@ -125,7 +134,7 @@ impl<T: VectorItem, const R:usize> Vector<T, R> {
 
 // TODO: add 'add' and 'mult' versions for references to vectors
 
-impl<'a, T: VectorItem, const R:usize> IntoIterator for &'a Vector<T, R> {
+impl<'a, T: VectorItem, const R: usize> IntoIterator for &'a Vector<T, R> {
     type Item = &'a T;
     type IntoIter = Iter<'a, T>;
 

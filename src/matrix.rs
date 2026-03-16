@@ -76,6 +76,13 @@ impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
         }
         transpose
     }
+    pub fn identity() -> Matrix<T, R, C> {
+        let mut mat = Matrix::new();
+        for i in 0..R {
+            mat.set(i, i, <T as VectorItem>::one());
+        }
+        mat
+    }
 }
 
 impl<T: VectorItem, const R: usize, const C: usize> From<[[T; R]; C]> for Matrix<T, R, C> {
@@ -139,6 +146,12 @@ impl<T: VectorItem, const R: usize, const S: usize, const C: usize> Mul<Matrix<T
 {
     type Output = Matrix<T, R, C>;
     fn mul(self, rhs: Matrix<T, S, C>) -> Self::Output {
-        unimplemented!();
+        let mut new = Matrix::new();
+        for (r_i, row) in self.get_rows().enumerate() {
+            for (c_i, col) in rhs.get_cols().enumerate() {
+                new.set(r_i, c_i, row.dot(col));
+            }
+        }
+        new
     }
 }

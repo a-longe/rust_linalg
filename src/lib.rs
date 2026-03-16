@@ -148,4 +148,27 @@ mod matrix_tests {
         assert_eq!(col0, mat1.get_row(0).unwrap());
         assert_eq!(col1, mat1.get_row(1).unwrap());
     }
+
+    #[test]
+    fn matrix_mul() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let mat2: Matrix<i32, 2, 2> = Matrix::from([[5, 6], [7, 8]]);
+        let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[19, 22], [43, 50]]);
+        assert_eq!(mat_ans, mat1 * mat2);
+    }
+
+    #[test]
+    fn matrix_identity() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 0], [0, 1]]);
+        assert_eq!(mat1, Matrix::<i32, 2, 2>::identity());
+    }
+
+    #[test]
+    fn matrix_identity_mul() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let mat2: Matrix<i32, 2, 2> = Matrix::<i32, 2, 2>::identity();
+        let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        assert_eq!(mat_ans, mat1 * mat2);
+        assert_eq!(mat_ans, mat2 * mat1);
+    }
 }
