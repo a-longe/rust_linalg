@@ -1,5 +1,5 @@
-pub mod vector;
 pub mod matrix;
+pub mod vector;
 
 #[cfg(test)]
 mod vector_tests {
@@ -7,7 +7,7 @@ mod vector_tests {
 
     #[test]
     fn create_vector_new() {
-        let _: Vector::<u32, 5> = Vector::new();
+        let _: Vector<u32, 5> = Vector::new();
     }
 
     #[test]
@@ -42,8 +42,8 @@ mod vector_tests {
         let vec1a: Vector<i32, 3> = Vector::from([1, 2, 3]);
         let vec1b: Vector<i32, 3> = Vector::from([1, 2, 3]);
         let vec2: Vector<i32, 3> = Vector::from([2, 4, 6]);
-        assert_eq!(vec2, vec1a*i32::from(2));
-        assert_eq!(vec2, i32::from(2)*vec1b);
+        assert_eq!(vec2, vec1a * i32::from(2));
+        assert_eq!(vec2, i32::from(2) * vec1b);
     }
 
     #[test]
@@ -53,9 +53,7 @@ mod vector_tests {
         assert_eq!(32, vec1.clone().dot(vec2.clone()));
         assert_eq!(32, vec2.dot(vec1));
     }
-
 }
-
 
 #[cfg(test)]
 mod matrix_tests {
@@ -75,7 +73,10 @@ mod matrix_tests {
     #[test]
     fn vector_debug() {
         let m1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
-        assert_eq!(format!("{:?}", m1), "Matrix<i32,2,2> { items: [Vector<i32,2> { items: [1, 2] }, Vector<i32,2> { items: [3, 4] }] }");
+        assert_eq!(
+            format!("{:?}", m1),
+            "Matrix<i32,2,2> { items: [Vector<i32,2> { items: [1, 2] }, Vector<i32,2> { items: [3, 4] }] }"
+        );
     }
 
     #[test]
@@ -83,8 +84,8 @@ mod matrix_tests {
         let m1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
         let m2: Matrix<i32, 2, 2> = Matrix::from([[1, 1], [1, 1]]);
         let m_ans: Matrix<i32, 2, 2> = Matrix::from([[2, 3], [4, 5]]);
-        assert_eq!(m_ans, m1+m2);
-        assert_eq!(m_ans, m2+m1);
+        assert_eq!(m_ans, m1 + m2);
+        assert_eq!(m_ans, m2 + m1);
     }
 
     #[test]
@@ -92,8 +93,8 @@ mod matrix_tests {
         let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
         let mat2: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
         let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[3, 6], [9, 12]]);
-        assert_eq!(mat_ans, mat1*i32::from(3));
-        assert_eq!(mat_ans, i32::from(3)*mat2);
+        assert_eq!(mat_ans, mat1 * i32::from(3));
+        assert_eq!(mat_ans, i32::from(3) * mat2);
     }
 
     #[test]
@@ -113,6 +114,24 @@ mod matrix_tests {
     }
 
     #[test]
+    fn matrix_get_cols() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let col0: Vector<i32, 2> = Vector::from([1, 2]);
+        let col1: Vector<i32, 2> = Vector::from([3, 4]);
+        assert_eq!(col0, mat1.get_cols().nth(0).unwrap());
+        assert_eq!(col1, mat1.get_cols().nth(1).unwrap());
+    }
+
+    #[test]
+    fn matrix_get_rows() {
+        let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 3], [2, 4]]);
+        let row0: Vector<i32, 2> = Vector::from([1, 2]);
+        let row1: Vector<i32, 2> = Vector::from([3, 4]);
+        assert_eq!(row0, mat1.get_rows().nth(0).unwrap());
+        assert_eq!(row1, mat1.get_rows().nth(1).unwrap());
+    }
+
+    #[test]
     fn matrix_get_col() {
         let mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
         let row0: Vector<i32, 2> = Vector::from([1, 2]);
@@ -129,5 +148,4 @@ mod matrix_tests {
         assert_eq!(col0, mat1.get_row(0).unwrap());
         assert_eq!(col1, mat1.get_row(1).unwrap());
     }
-
 }
