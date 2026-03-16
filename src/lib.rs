@@ -175,4 +175,35 @@ mod matrix_tests {
         assert_eq!(mat_ans, mat1 * mat2);
         assert_eq!(mat_ans, mat2 * mat1);
     }
+
+    #[test]
+    fn matrix_row_swap() {
+        let mut mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[2, 1], [4, 3]]);
+        mat1.row_swap(0, 1);
+        assert_eq!(mat_ans, mat1);
+    }
+
+    #[test]
+    #[should_panic]
+    fn matrix_row_swap_out_of_bounds() {
+        let mut mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        mat1.row_swap(0, 2)
+    }
+
+    #[test]
+    fn matrix_row_mul() {
+        let mut mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[2, 2], [6, 4]]);
+        mat1.row_mult(0, 2);
+        assert_eq!(mat_ans, mat1);
+    }
+
+    #[test]
+    fn matrix_row_add() {
+        let mut mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[5, 2], [11, 4]]);
+        mat1.row_add(0, 1, 2);
+        assert_eq!(mat_ans, mat1);
+    }
 }

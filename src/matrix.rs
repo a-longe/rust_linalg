@@ -155,3 +155,47 @@ impl<T: VectorItem, const R: usize, const S: usize, const C: usize> Mul<Matrix<T
         new
     }
 }
+
+// Row Operations and Inverses
+impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
+    pub fn row_swap(&mut self, row1_i: usize, row2_i: usize) {
+        if row1_i >= R || row2_i >= R {
+            panic!("Row index out of bounds");
+        }
+        for c_i in 0..C {
+            let temp = self
+                .get(row1_i, c_i)
+                .expect("Matrix is larger than type suggests");
+            self.set(
+                row1_i,
+                c_i,
+                self.get(row2_i, c_i)
+                    .expect("Matrix is larger than type suggests"),
+            );
+            self.set(row2_i, c_i, temp);
+        }
+    }
+    pub fn row_mult(&mut self, row_i: usize, scalar: T) {
+        for c_i in 0..C {
+            let temp = self
+                .get(row_i, c_i)
+                .expect("Matrix is larger than type suggests");
+            self.set(row_i, c_i, temp * scalar);
+        }
+    }
+    pub fn row_add(&mut self, row1_i: usize, row2_i: usize, scalar: T) {
+        for c_i in 0..C {
+            let temp = self
+                .get(row1_i, c_i)
+                .expect("Matrix is larger than type suggests");
+            self.set(
+                row1_i,
+                c_i,
+                temp + self
+                    .get(row2_i, c_i)
+                    .expect("Matrix is larger than type suggests")
+                    * scalar,
+            );
+        }
+    }
+}
