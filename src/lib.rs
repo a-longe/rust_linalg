@@ -7,7 +7,7 @@ mod vector_tests {
 
     #[test]
     fn create_vector_new() {
-        let _: Vector<u32, 5> = Vector::new();
+        let _: Vector<i32, 5> = Vector::new();
     }
 
     #[test]
@@ -56,7 +56,9 @@ mod vector_tests {
 }
 
 #[cfg(test)]
+#[macro_use]
 mod matrix_tests {
+    use crate::mat;
     use crate::matrix::*;
     use crate::vector::*;
 
@@ -200,10 +202,98 @@ mod matrix_tests {
     }
 
     #[test]
+    #[should_panic]
+    fn matrix_row_mul_out_of_bounds() {
+        let mut mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        mat1.row_mult(3, 3);
+    }
+
+    #[test]
     fn matrix_row_add() {
         let mut mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
         let mat_ans: Matrix<i32, 2, 2> = Matrix::from([[5, 2], [11, 4]]);
         mat1.row_add(0, 1, 2);
         assert_eq!(mat_ans, mat1);
+    }
+
+    #[test]
+    #[should_panic]
+    fn matrix_row_add_out_of_bounds() {
+        let mut mat1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
+        mat1.row_add(3, 1, 3);
+    }
+
+    #[test]
+    fn matrix_macro_test() {
+        let mat1: Matrix<i32, 2, 3> = mat![1, 2, 3; 4, 5, 6];
+        let mat_ans: Matrix<i32, 2, 3> = Matrix::from([[1, 4], [2, 5], [3, 6]]);
+        assert_eq!(mat_ans, mat1);
+    }
+}
+
+#[cfg(test)]
+mod augmented_matrix_tests {
+    use crate::matrix::*;
+    use crate::mat;
+
+    #[test]
+    fn aug_matrix_from() {
+        let mat1: Matrix<i32, 2, 3> = mat![1, 2, 3; 4, 5, 6];
+        let mat2: Matrix<i32, 2, 4> = mat![1, 2, 3, 4; 5, 6, 7, 8];
+        let _aug_mat: AugmentedMatrix<i32, 2, 3, 4> = AugmentedMatrix::from((mat1, mat2));
+    }
+
+    #[test]
+    fn aug_matrix_row_swap() {
+        let mut aug_mat: AugmentedMatrix<i32, 2, 4, 3> = AugmentedMatrix::from((
+            mat![1, 2, 3, 4; 5, 6, 7, 8],
+            mat![2, 3, 4; 5, 6, 7],
+        ));
+        aug_mat.row_swap(0, 1);
+        let aug_ans: AugmentedMatrix<i32, 2, 4, 3> = AugmentedMatrix::from((
+            mat![5, 6, 7, 8; 1, 2, 3, 4],
+            mat![5, 6, 7; 2, 3, 4],
+        ));
+        assert_eq!(aug_ans, aug_mat);
+    }
+
+    #[test]
+    fn aug_matrix_row_add() {
+        let mut aug_mat: AugmentedMatrix<i32, 2, 4, 3> = AugmentedMatrix::from((
+            mat![1, 2, 3, 4; 5, 6, 7, 8],
+            mat![2, 3, 4; 5, 6, 7],
+        ));
+        aug_mat.row_add(0, 1, 2);
+        let aug_ans: AugmentedMatrix<i32, 2, 4, 3> = AugmentedMatrix::from((
+            mat![11, 14, 17, 20; 5, 6, 7, 8],
+            mat![12, 15, 18; 5, 6, 7],
+        ));
+        assert_eq!(aug_ans, aug_mat);
+    }
+
+    #[test]
+    fn aug_matrix_row_mult() {
+        let mut aug_mat: AugmentedMatrix<i32, 2, 4, 3> = AugmentedMatrix::from((
+            mat![1, 2, 3, 4; 5, 6, 7, 8],
+            mat![2, 3, 4; 5, 6, 7],
+        ));
+        aug_mat.row_mult(0, 2);
+        let aug_ans: AugmentedMatrix<i32, 2, 4, 3> = AugmentedMatrix::from((
+            mat![2, 4, 6, 8; 5, 6, 7, 8],
+            mat![4, 6, 8; 5, 6, 7],
+        ));
+        assert_eq!(aug_ans, aug_mat);
+    }
+
+    #[test]
+    fn aug_matrix_reduce_left_to_id() {
+        let mut aug_mat: AugmentedMatrix<f32, 2, 2, 2> = AugmentedMatrix::from((
+            mat![1_f32, 2_f32; 3_f32, 4_f32],
+            Matrix::<f32, 2, 2>::identity() ));
+        aug_mat.reduce_left();
+        let aug_reduced: AugmentedMatrix<f32, 2, 2, 2> = AugmentedMatrix::from((
+            Matrix::<f32, 2, 2>::identity(),
+            (1_f32 / -2_f32) * mat![4_f32, -2_f32; 1_f32, -3_f32] ));
+        assert_eq!(aug_reduced, aug_mat);
     }
 }

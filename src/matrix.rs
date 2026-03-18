@@ -9,6 +9,28 @@ pub struct Matrix<T: VectorItem, const R: usize, const C: usize> {
     items: [Vector<T, R>; C],
 }
 
+// Macro for creating a matrix literal
+// Usage: mat![1, 2; 3, 4] => Matrix::from([[1, 3], [2, 4]])
+#[macro_export]
+macro_rules! mat {
+    // Match rows separated by semicolons, elements separated by commas
+    ($($($val:expr),+);+) => {
+        {
+            // Collect all rows into a nested array
+            let rows = [$( [$($val),+] ),+];
+
+            // Transpose: rows become columns since Vector is a column
+            Matrix::from_rows(rows)
+        }
+    };
+}
+
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub struct AugmentedMatrix<T: VectorItem, const R: usize, const C1: usize, const C2: usize> {
+    left: Matrix<T, R, C1>,
+    right: Matrix<T, R, C2>,
+}
+
 impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
     pub fn new() -> Matrix<T, R, C> {
         Matrix {
@@ -93,11 +115,30 @@ impl<T: VectorItem, const R: usize, const C: usize> From<[[T; R]; C]> for Matrix
     }
 }
 
+impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
+    pub fn from_rows(rows: [[T; C]; R]) -> Self {
+        let mut cols = [[T::default(); R]; C];
+
+        for col in 0..C {
+            for row in 0..R {
+                cols[col][row] = rows[row][col];
+            }
+        }
+
+        Matrix::from(cols)
+    }
+}
+
 impl<T: VectorItem, const R: usize, const C: usize> Debug for Matrix<T, R, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct(&format!("Matrix<{},{},{}>", any::type_name::<T>(), R, C))
-            .field("items", &self.items)
-            .finish()
+        writeln!(f, "Matrix<{},{},{}>", any::type_name::<T>(), R, C)?;
+        for row in 0..R {
+            for col in 0..C {
+                write!(f, "{:?} ", self.get(row, col).unwrap_or(T::one()))?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
     }
 }
 
@@ -138,7 +179,7 @@ macro_rules! impl_mat_scalar_mul {
         )
 *};}
 impl_mat_scalar_mul!(
-    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
+    i8, i16, i32, i64, i128, isize, f32, f64
 );
 
 impl<T: VectorItem, const R: usize, const S: usize, const C: usize> Mul<Matrix<T, S, C>>
@@ -156,7 +197,7 @@ impl<T: VectorItem, const R: usize, const S: usize, const C: usize> Mul<Matrix<T
     }
 }
 
-// Row Operations and Inverses
+// Row Operations
 impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
     pub fn row_swap(&mut self, row1_i: usize, row2_i: usize) {
         if row1_i >= R || row2_i >= R {
@@ -197,5 +238,66 @@ impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
                     * scalar,
             );
         }
+    }
+}
+
+// Augmented Matrices
+impl<T: VectorItem, const R: usize, const C1: usize, const C2: usize>
+    From<(Matrix<T, R, C1>, Matrix<T, R, C2>)> for AugmentedMatrix<T, R, C1, C2> {
+    fn from((left, right): (Matrix<T, R, C1>, Matrix<T, R, C2>)) -> Self {
+        Self { left, right }
+    }
+}
+
+impl<T: VectorItem, const R: usize, const C1: usize, const C2: usize>
+    AugmentedMatrix<T, R, C1, C2> {
+    pub fn get_left(&self) -> &Matrix<T, R, C1> {
+        &self.left
+    }
+    pub fn get_right(&self) -> &Matrix<T, R, C2> {
+        &self.right
+    }
+    pub fn get_mut_left(&mut self) -> &mut Matrix<T, R, C1> {
+        &mut self.left
+    }
+    pub fn get_mut_right(&mut self) -> &mut Matrix<T, R, C2> {
+        &mut self.right
+    }
+    pub fn row_swap(&mut self, row1_i: usize, row2_i: usize) {
+        self.left.row_swap(row1_i, row2_i);
+        self.right.row_swap(row1_i, row2_i);
+    }
+    pub fn row_add(&mut self, row1_i: usize, row2_i: usize, scalar: T) {
+        self.left.row_add(row1_i, row2_i, scalar);
+        self.right.row_add(row1_i, row2_i, scalar);
+    }
+    pub fn row_mult(&mut self, row_i: usize, scalar: T) {
+        self.left.row_mult(row_i, scalar);
+        self.right.row_mult(row_i, scalar);
+    }
+    pub fn reduce_left(&mut self) {
+        for row_i in 0..R {
+            let pivot = self.left.get(row_i, row_i).unwrap_or(T::one());
+            if pivot != T::one() {
+                self.row_mult(row_i, T::one() / pivot);
+            }
+            // Zero out rows above pivot
+            for other_row_i in 0..row_i {
+                let scalar = -self.left.get(other_row_i, row_i).unwrap_or(T::one());
+                self.row_add(other_row_i, row_i, scalar);
+            }
+            // Zero out rows below pivot
+            for other_row_i in (row_i + 1)..R {
+                let scalar = -self.left.get(other_row_i, row_i).unwrap_or(T::one());
+                self.row_add(other_row_i, row_i, scalar);
+            }
+        }
+    }
+}
+
+// Inverse
+impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
+    pub fn inverse(&self) -> Option<Matrix<T, R, C>> {
+        todo!();
     }
 }

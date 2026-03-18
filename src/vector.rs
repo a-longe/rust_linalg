@@ -1,7 +1,7 @@
 use std::any;
 use std::fmt::Debug;
 use std::slice::Iter;
-use std::{ops::Add, ops::Mul, ops::Sub};
+use std::{ops::Add, ops::Mul, ops::Sub, ops::Neg, ops::Div};
 
 #[derive(Copy, Clone, PartialEq)]
 pub struct Vector<T: VectorItem, const R: usize> {
@@ -12,6 +12,8 @@ pub trait VectorItem:
     Add<Output = Self>
     + Sub<Output = Self>
     + Mul<Output = Self>
+    + Div<Output = Self>
+    + Neg<Output = Self>
     + PartialOrd
     + PartialEq
     + Copy
@@ -34,7 +36,7 @@ macro_rules! impl_vector_item {
 }
 
 impl_vector_item!(
-    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
+    i8, i16, i32, i64, i128, isize, f32, f64
 );
 
 impl<T: VectorItem, const R: usize> Vector<T, R> {
@@ -112,7 +114,7 @@ macro_rules! impl_vec_scalar_mul {
         )
 *};}
 impl_vec_scalar_mul!(
-    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64
+    i8, i16, i32, i64, i128, isize, f32, f64
 );
 
 impl<T: VectorItem, const R: usize> Vector<T, R> {
