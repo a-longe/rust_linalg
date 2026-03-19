@@ -249,8 +249,7 @@ impl<T: VectorItem, const R: usize, const C1: usize, const C2: usize>
     }
 }
 
-impl<T: VectorItem, const R: usize, const C1: usize, const C2: usize>
-    AugmentedMatrix<T, R, C1, C2> {
+impl<T: VectorItem, const R: usize, const C1: usize, const C2: usize> AugmentedMatrix<T, R, C1, C2> {
     pub fn get_left(&self) -> &Matrix<T, R, C1> {
         &self.left
     }
@@ -276,21 +275,53 @@ impl<T: VectorItem, const R: usize, const C1: usize, const C2: usize>
         self.right.row_mult(row_i, scalar);
     }
     pub fn reduce_left(&mut self) {
-        for row_i in 0..R {
-            let pivot = self.left.get(row_i, row_i).unwrap_or(T::one());
-            if pivot != T::one() {
-                self.row_mult(row_i, T::one() / pivot);
+        let mut current_row = 0;
+
+        for col in 0..C1 {
+            if current_row >= R {
+                break;
             }
-            // Zero out rows above pivot
-            for other_row_i in 0..row_i {
-                let scalar = -self.left.get(other_row_i, row_i).unwrap_or(T::one());
-                self.row_add(other_row_i, row_i, scalar);
+
+            // Find a non-zero pivot in this column starting from current_row
+            let mut pivot_row_opt = None;
+            for row in current_row..R {
+                let val = self.left.get(row, col).unwrap();
+                if val != T::zero() {
+                    pivot_row_opt = Some(row);
+                    break;
+                }
             }
-            // Zero out rows below pivot
-            for other_row_i in (row_i + 1)..R {
-                let scalar = -self.left.get(other_row_i, row_i).unwrap_or(T::one());
-                self.row_add(other_row_i, row_i, scalar);
+
+            // If no pivot found in this column, skip to next column
+            let pivot_row = match pivot_row_opt {
+                Some(r) => r,
+                None => continue,
+            };
+
+            // Swap the pivot row to current_row if needed
+            if pivot_row != current_row {
+                self.row_swap(pivot_row, current_row);
             }
+
+            // Scale the pivot row so the pivot element becomes 1
+            let pivot_val = self.left.get(current_row, col).unwrap();
+            let scale_factor = T::one() / pivot_val;
+            self.row_mult(current_row, scale_factor);
+
+            // Eliminate all other elements in this column
+            for row in 0..R {
+                if row == current_row {
+                    continue;
+                }
+                let element = self.left.get(row, col).unwrap();
+                if element != T::zero() {
+                    // row_add subtracts scalar * current_row from row
+                    // We want: row -= element * current_row
+                    self.row_add(row, current_row, -element);
+                }
+            }
+
+            current_row += 1;
         }
     }
 }
@@ -298,6 +329,12 @@ impl<T: VectorItem, const R: usize, const C1: usize, const C2: usize>
 // Inverse
 impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
     pub fn inverse(&self) -> Option<Matrix<T, R, C>> {
-        todo!();
+        let mut aug = AugmentedMatrix::from((*self, Matrix::identity()));
+        aug.reduce_left();
+        if aug.left == Matrix::identity() {
+            Some(aug.right)
+        } else {
+            None
+        }
     }
 }

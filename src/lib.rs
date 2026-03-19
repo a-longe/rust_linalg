@@ -73,11 +73,11 @@ mod matrix_tests {
     }
 
     #[test]
-    fn vector_debug() {
+    fn matrix_debug() {
         let m1: Matrix<i32, 2, 2> = Matrix::from([[1, 2], [3, 4]]);
         assert_eq!(
             format!("{:?}", m1),
-            "Matrix<i32,2,2> { items: [Vector<i32,2> { items: [1, 2] }, Vector<i32,2> { items: [3, 4] }] }"
+            "Matrix<i32,2,2>\n1 3 \n2 4 \n"
         );
     }
 
@@ -229,6 +229,13 @@ mod matrix_tests {
         let mat_ans: Matrix<i32, 2, 3> = Matrix::from([[1, 4], [2, 5], [3, 6]]);
         assert_eq!(mat_ans, mat1);
     }
+
+    #[test]
+    fn matrix_inverse() {
+        let mat1: Matrix<f64, 2, 2> = mat![1.0, 2.0; 3.0, 4.0];
+        let mat_ans: Matrix<f64, 2, 2> = (-1.0 / 2.0) * mat![4.0, -2.0; -3.0, 1.0];
+        assert_eq!(mat_ans, mat1.inverse().unwrap());
+    }
 }
 
 #[cfg(test)]
@@ -293,7 +300,8 @@ mod augmented_matrix_tests {
         aug_mat.reduce_left();
         let aug_reduced: AugmentedMatrix<f32, 2, 2, 2> = AugmentedMatrix::from((
             Matrix::<f32, 2, 2>::identity(),
-            (1_f32 / -2_f32) * mat![4_f32, -2_f32; 1_f32, -3_f32] ));
+            (1_f32 / -2_f32) * mat![4_f32, -2_f32; -3_f32, 1_f32] ));
         assert_eq!(aug_reduced, aug_mat);
     }
+
 }

@@ -1,6 +1,7 @@
 use std::any;
 use std::fmt::Debug;
 use std::slice::Iter;
+use std::cmp::Ord;
 use std::{ops::Add, ops::Mul, ops::Sub, ops::Neg, ops::Div};
 
 #[derive(Copy, Clone, PartialEq)]
@@ -21,8 +22,11 @@ pub trait VectorItem:
     + Debug
     + Default
     + Sized
+    + PartialOrd
 {
     fn one() -> Self;
+    fn zero() -> Self;
+    fn abs(self) -> Self;
 }
 
 macro_rules! impl_vector_item {
@@ -30,6 +34,8 @@ macro_rules! impl_vector_item {
         $(
             impl VectorItem for $t {
                 fn one() -> Self { 1 as $t }
+                fn zero() -> Self { 0 as $t }
+                fn abs(self) -> Self { self.abs() }
             }
         )*
     };
