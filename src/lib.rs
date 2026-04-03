@@ -236,12 +236,74 @@ mod matrix_tests {
         let mat_ans: Matrix<f64, 2, 2> = (-1.0 / 2.0) * mat![4.0, -2.0; -3.0, 1.0];
         assert_eq!(mat_ans, mat1.inverse().unwrap());
     }
+
+    #[test]
+    fn matrix_inverse_no_solution() {
+        let mat1: Matrix<f64, 2, 2> = mat![1.0, 0.0; 0.0, 0.0];
+        assert_eq!(mat1.inverse(), None);
+    }
+
+    #[test]
+    fn matrix_inverse_identity() {
+        let mat1: Matrix<f64, 2, 2> = mat![1.0, 0.0; 0.0, 1.0];
+        assert_eq!(mat1.inverse().unwrap(), Matrix::<f64, 2, 2>::identity());
+    }
+
+    #[test]
+    fn matrix_to_rref() {
+        let mat1: Matrix<f32, 3, 3> = mat![1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0];
+        let mat_ans: Matrix<f32, 3, 3> = mat![1.0, 0.0, -1.0; 0.0, 1.0, 2.0; 0.0, 0.0, 0.0];
+        assert_eq!(mat_ans, mat1.to_rref());
+    }
+
+    #[test]
+    fn matrix_to_rref_full_rank() {
+        // A full-rank matrix should reduce to the identity
+        let mat1: Matrix<f32, 2, 2> = mat![2.0, 1.0; 4.0, 3.0];
+        assert_eq!(Matrix::<f32, 2, 2>::identity(), mat1.to_rref());
+    }
+
+    #[test]
+    fn matrix_to_rref_already_rref() {
+        // Identity stays identity
+        let mat1 = Matrix::<f32, 3, 3>::identity();
+        assert_eq!(mat1, mat1.to_rref());
+    }
+
+    #[test]
+    fn matrix_inverse_3x3() {
+        let mat1: Matrix<f64, 3, 3> = mat![1.0, 2.0, 0.0; 0.0, 1.0, 3.0; 0.0, 0.0, 1.0];
+        let mat_ans: Matrix<f64, 3, 3> = mat![1.0, -2.0, 6.0; 0.0, 1.0, -3.0; 0.0, 0.0, 1.0];
+        assert_eq!(mat_ans, mat1.inverse().unwrap());
+    }
+
+    #[test]
+    fn matrix_inverse_singular_3x3() {
+        // Rank-deficient 3x3 has no inverse
+        let mat1: Matrix<f64, 3, 3> = mat![1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0];
+        assert_eq!(mat1.inverse(), None);
+    }
+
+    #[test]
+    fn matrix_rank() {
+        let mat1: Matrix<f32, 3, 3> = mat![1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0];
+        assert_eq!(mat1.rank(), 2);
+        let mat2: Matrix<f32, 3, 3> = mat![1.0, 0.0, 0.0; 0.0, 1.0, 0.0; 0.0, 0.0, 0.0];
+        assert_eq!(mat2.rank(), 2);
+        let mat3: Matrix<f32, 3, 3> = mat![1.0, 0.0, 0.0; 1.0, 0.0, 0.0; 0.0, 0.0, 0.0];
+        assert_eq!(mat3.rank(), 1);
+        let mat4: Matrix<f32, 3, 3> = mat![1.0, 0.0, 0.0; 1.0, 0.0, 0.0; 0.0, 0.0, 1.0];
+        assert_eq!(mat4.rank(), 2);
+        let mat5: Matrix<f32, 3, 3> = mat![1.0, 0.0, 0.0; 0.0, 1.0, 0.0; 0.0, 0.0, 1.0];
+        assert_eq!(mat5.rank(), 3);
+    }
 }
 
 #[cfg(test)]
 mod augmented_matrix_tests {
     use crate::matrix::*;
     use crate::mat;
+    use crate::vector::Vector;
 
     #[test]
     fn aug_matrix_from() {
@@ -302,6 +364,84 @@ mod augmented_matrix_tests {
             Matrix::<f32, 2, 2>::identity(),
             (1_f32 / -2_f32) * mat![4_f32, -2_f32; -3_f32, 1_f32] ));
         assert_eq!(aug_reduced, aug_mat);
+    }
+
+    #[test]
+    fn aug_matrix_reduce_left_uninvertible() {
+        let mut aug_mat: AugmentedMatrix<f32, 2, 2, 2> = AugmentedMatrix::from((
+            mat![4_f32, 2_f32; 2_f32, 1_f32],
+            Matrix::<f32, 2, 2>::identity() ));
+        aug_mat.reduce_left();
+        assert_ne!(aug_mat.get_left(), &Matrix::<f32, 2, 2>::identity());
+    }
+
+    #[test]
+    fn aug_matrix_reduce_left() {
+        let mat1: Matrix<f32, 3, 3> = mat![1.0, 2.0, 3.0; 4.0, 5.0, 6.0; 7.0, 8.0, 9.0];
+        let mat_ans: Matrix<f32, 3, 3> = mat![1.0, 0.0, -1.0; 0.0, 1.0, 2.0; 0.0, 0.0, 0.0];
+        let mut aug_mat: AugmentedMatrix<f32, 3, 3, 3> = AugmentedMatrix::from((
+            mat1,
+            Matrix::<f32, 3, 3>::identity() ));
+        aug_mat.reduce_left();
+        assert_eq!(mat_ans, *aug_mat.get_left());
+    }
+
+    #[test]
+    fn aug_matrix_solve() {
+        let mut aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![1_f32, 0_f32; 0_f32, 1_f32],
+            mat![5_f32; 6_f32] ));
+        aug_mat.reduce_left();
+        let solution = Solution::Unique(Vector::from([5_f32, 6_f32]));
+        assert_eq!(solution, aug_mat.solve_for_right());
+    }
+
+    #[test]
+    fn aug_matrix_solve_with_scalar() {
+        let mut aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![2_f32, 0_f32; 0_f32, 1_f32],
+            mat![10_f32; 6_f32] ));
+        aug_mat.reduce_left();
+        let solution = Solution::Unique(Vector::from([5_f32, 6_f32]));
+        assert_eq!(solution, aug_mat.solve_for_right());
+    }
+
+    #[test]
+    fn aug_matrix_solve_no_solution() {
+        let mut aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![1_f32, 0_f32; 1_f32, 0_f32],
+            mat![5_f32; 7_f32] ));
+        aug_mat.reduce_left();
+        let solution = Solution::NoSolution;
+        assert_eq!(solution, aug_mat.solve_for_right());
+    }
+
+    #[test]
+    fn aug_matrix_solve_infinite_solutions() {
+        let aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![1_f32, 2_f32; 2_f32, 4_f32],
+            mat![4_f32; 8_f32] ));
+        let solution = Solution::InfinitelyMany;
+        assert_eq!(solution, aug_mat.solve_for_right());
+    }
+
+    #[test]
+    fn aug_matrix_solve_general() {
+        // 2x + y = 5, x + 3y = 10  =>  x = 1, y = 3
+        let aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![2_f32, 1_f32; 1_f32, 3_f32],
+            mat![5_f32; 10_f32] ));
+        let solution = Solution::Unique(Vector::from([1_f32, 3_f32]));
+        assert_eq!(solution, aug_mat.solve_for_right());
+    }
+
+    #[test]
+    fn aug_matrix_rank() {
+        let mut aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![1_f32, 0_f32; 0_f32, 0_f32],
+            mat![0_f32; 1_f32] ));
+        aug_mat.reduce_left();
+        assert_eq!(2, aug_mat.rank());
     }
 
 }

@@ -31,3 +31,8 @@ target
 # already existing elements were commented out
 
 #/target
+
+# Node.js
+node_modules/
+package-lock.json
+package.json

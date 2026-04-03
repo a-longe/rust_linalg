@@ -1,7 +1,6 @@
 use std::any;
 use std::fmt::Debug;
 use std::slice::Iter;
-use std::cmp::Ord;
 use std::{ops::Add, ops::Mul, ops::Sub, ops::Neg, ops::Div};
 
 #[derive(Copy, Clone, PartialEq)]
@@ -137,6 +136,9 @@ impl<T: VectorItem, const R: usize> Vector<T, R> {
             sum = sum + (*val * *val);
         }
         sum
+    }
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.items.iter()
     }
 }
 

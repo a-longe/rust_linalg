@@ -239,6 +239,22 @@ impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
             );
         }
     }
+    pub fn to_rref(&self) -> Matrix<T, R, C> {
+       let mut aug: AugmentedMatrix<T, R, C, C> = AugmentedMatrix::from((*self, Matrix::identity()));
+       aug.reduce_left();
+       aug.left
+    }
+    pub fn rank(&self) -> usize {
+        // The rank of a matrix is simply the number of non-zero rows
+        let rref = self.to_rref();
+        let mut rank = 0;
+        for row in rref.get_rows() {
+            if row.iter().any(|&x| x != T::zero()) {
+                rank += 1;
+            }
+        }
+        rank
+    }
 }
 
 // Augmented Matrices
@@ -275,53 +291,30 @@ impl<T: VectorItem, const R: usize, const C1: usize, const C2: usize> AugmentedM
         self.right.row_mult(row_i, scalar);
     }
     pub fn reduce_left(&mut self) {
-        let mut current_row = 0;
-
+        let mut pivot_row = 0;
         for col in 0..C1 {
-            if current_row >= R {
-                break;
-            }
-
-            // Find a non-zero pivot in this column starting from current_row
-            let mut pivot_row_opt = None;
-            for row in current_row..R {
-                let val = self.left.get(row, col).unwrap();
-                if val != T::zero() {
-                    pivot_row_opt = Some(row);
+            // Find the first row at or below pivot_row with a nonzero entry in this column
+            let mut nonzero_row = None;
+            for row in pivot_row..R {
+                if self.left.get(row, col).unwrap() != T::zero() {
+                    nonzero_row = Some(row);
                     break;
                 }
             }
-
-            // If no pivot found in this column, skip to next column
-            let pivot_row = match pivot_row_opt {
-                Some(r) => r,
-                None => continue,
-            };
-
-            // Swap the pivot row to current_row if needed
-            if pivot_row != current_row {
-                self.row_swap(pivot_row, current_row);
-            }
-
-            // Scale the pivot row so the pivot element becomes 1
-            let pivot_val = self.left.get(current_row, col).unwrap();
-            let scale_factor = T::one() / pivot_val;
-            self.row_mult(current_row, scale_factor);
-
-            // Eliminate all other elements in this column
-            for row in 0..R {
-                if row == current_row {
-                    continue;
+            if let Some(nonzero_row) = nonzero_row {
+                self.row_swap(pivot_row, nonzero_row);
+                self.row_mult(pivot_row, T::one() / self.left.get(pivot_row, col).unwrap());
+                // Eliminate this column from ALL other rows (full RREF)
+                for other_row in 0..R {
+                    if other_row != pivot_row {
+                        let factor = -self.left.get(other_row, col).unwrap();
+                        if factor != T::zero() {
+                            self.row_add(other_row, pivot_row, factor);
+                        }
+                    }
                 }
-                let element = self.left.get(row, col).unwrap();
-                if element != T::zero() {
-                    // row_add subtracts scalar * current_row from row
-                    // We want: row -= element * current_row
-                    self.row_add(row, current_row, -element);
-                }
+                pivot_row += 1;
             }
-
-            current_row += 1;
         }
     }
 }
@@ -336,5 +329,51 @@ impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
         } else {
             None
         }
+    }
+}
+
+// TODO: implement type for InfinitelyMany
+#[derive(Debug, PartialEq)]
+pub enum Solution<T: VectorItem, const R: usize> {
+    Unique(Vector<T, R>),
+    InfinitelyMany,
+    NoSolution,
+}
+
+impl<T: VectorItem, const R: usize, const C: usize> AugmentedMatrix<T, R, C, 1> {
+    pub fn rank(&self) -> usize {
+        let mut rank = 0;
+        for r_i in 0..R {
+            let left_nonzero = (0..C).any(|c_i| {
+                self.left.get(r_i, c_i).map(|v| v != T::zero()).unwrap_or(false)
+            });
+            let right_nonzero = self.right.get(r_i, 0).map(|v| v != T::zero()).unwrap_or(false);
+            if left_nonzero || right_nonzero {
+                rank += 1;
+            }
+        }
+        rank
+    }
+    fn has_solution(&self) -> bool {
+        self.rank() == self.get_left().rank()
+    }
+    pub fn solve_for_right(&self) -> Solution<T, R> {
+        let mut temp = self.clone();
+        temp.reduce_left();
+
+        // Check if solution exists
+        if !temp.has_solution() {
+            return Solution::NoSolution;
+        }
+
+        if temp.rank() < C {
+            return Solution::InfinitelyMany;
+        }
+
+        let mut solution: Vector<T, R> = Vector::new();
+        for row in 0..R {
+            solution.set(row, temp.right.get(row, 0).unwrap());
+        }
+        Solution::Unique(solution)
     }
 }
