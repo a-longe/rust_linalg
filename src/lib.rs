@@ -436,6 +436,42 @@ mod augmented_matrix_tests {
     }
 
     #[test]
+    fn try_solve_unique() {
+        // 2x + y = 5, x + 3y = 10  =>  x = 1, y = 3
+        let aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![2_f32, 1_f32; 1_f32, 3_f32],
+            mat![5_f32; 10_f32] ));
+        assert_eq!(Solution::Unique(Vector::from([1_f32, 3_f32])), aug_mat.try_solve());
+    }
+
+    #[test]
+    fn try_solve_no_solution() {
+        // Inconsistent system: x = 5 and x = 7
+        let aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![1_f32, 0_f32; 1_f32, 0_f32],
+            mat![5_f32; 7_f32] ));
+        assert_eq!(Solution::NoSolution, aug_mat.try_solve());
+    }
+
+    #[test]
+    fn try_solve_infinite_solutions() {
+        // Dependent rows: infinitely many solutions
+        let aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
+            mat![1_f32, 2_f32; 2_f32, 4_f32],
+            mat![4_f32; 8_f32] ));
+        assert_eq!(Solution::InfinitelyMany, aug_mat.try_solve());
+    }
+
+    #[test]
+    fn try_solve_3x3() {
+        // x + 2z = 1, y + 3z = 2, z = 1  =>  x = -1, y = -1, z = 1
+        let aug_mat: AugmentedMatrix<f64, 3, 3, 1> = AugmentedMatrix::from((
+            mat![1.0, 0.0, 2.0; 0.0, 1.0, 3.0; 0.0, 0.0, 1.0],
+            mat![1.0; 2.0; 1.0] ));
+        assert_eq!(Solution::Unique(Vector::from([-1.0_f64, -1.0, 1.0])), aug_mat.try_solve());
+    }
+
+    #[test]
     fn aug_matrix_rank() {
         let mut aug_mat: AugmentedMatrix<f32, 2, 2, 1> = AugmentedMatrix::from((
             mat![1_f32, 0_f32; 0_f32, 0_f32],

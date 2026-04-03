@@ -332,6 +332,31 @@ impl<T: VectorItem, const R: usize, const C: usize> Matrix<T, R, C> {
     }
 }
 
+impl<T: VectorItem, const R: usize, const C: usize> AugmentedMatrix<T, R, C, 1> {
+    /// Solves `Ax = b`, returning a `Solution<T, C>` with one entry per unknown.
+    /// Unlike `solve_for_right`, the solution vector has length `C`, which is
+    /// correct for both square and overdetermined systems.
+    pub fn try_solve(&self) -> Solution<T, C> {
+        let mut temp = self.clone();
+        temp.reduce_left();
+
+        if !temp.has_solution() {
+            return Solution::NoSolution;
+        }
+
+        // Fewer pivots than unknowns → infinitely many solutions
+        if temp.get_left().rank() < C {
+            return Solution::InfinitelyMany;
+        }
+
+        let mut solution: Vector<T, C> = Vector::new();
+        for i in 0..C {
+            solution.set(i, temp.right.get(i, 0).unwrap());
+        }
+        Solution::Unique(solution)
+    }
+}
+
 // TODO: implement type for InfinitelyMany
 #[derive(Debug, PartialEq)]
 pub enum Solution<T: VectorItem, const R: usize> {
